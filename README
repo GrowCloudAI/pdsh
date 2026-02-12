@@ -1,23 +1,23 @@
 +-------------+
-| Description |
+| 📖 Description |
 +-------------+
 Ever wished you could run the same command on 100 servers simultaneously
 without breaking a sweat? Meet pdsh: your new best friend for parallel
-remote execution. Think of it as the Swiss Army knife of distributed shell
+remote execution. 🚀 Think of it as the Swiss Army knife of distributed shell
 commands, minus the tiny scissors you never use.
 
 Pdsh is a multithreaded remote shell client that fires off commands to
-multiple hosts in parallel. It's like having your own personal army of
+multiple hosts in parallel. 💪 It's like having your own personal army of
 terminal windows, except they actually coordinate. Choose your weapon:
 classic rsh, Kerberos IV, or everyone's favorite, ssh.
 
-TL;DR: One command, many machines, zero patience required.
+⚡ TL;DR: One command, many machines, zero patience required.
 
 See the man page in the doc directory for usage information (yes, we
 actually wrote one).
 
 +---------------+
-| Configuration |
+| ⚙️ Configuration |
 +---------------+
 
 Pdsh harnesses the power of GNU autoconf, which means it'll figure out
@@ -90,12 +90,12 @@ statically compile conflicting modules, the build will politely refuse.
 Check the man page for the full relationship drama between modules.
 
 +------------+
-| INSTALLING |
+| 🔨 INSTALLING |
 +------------+
 make
 make install
 
-Plot twist: pdsh installs WITHOUT setuid permissions by default! This is
+🎉 Plot twist: pdsh installs WITHOUT setuid permissions by default! This is
 because most rcmd protocols don't actually need root. Democracy wins!
 
 However, if you're old school and using "rcmd/rsh" or "rcmd/qsh" modules,
@@ -105,10 +105,10 @@ you'll need to grant pdsh and pdcp the keys to the kingdom:
  > chmod 4755 PREFIX/bin/pdsh PREFIX/bin/pdcp
 
 +---------+
-| GOTCHAS |
+| ⚠️ GOTCHAS |
 +---------+
 
-Before you blast commands to 1000 nodes, heads up on these fun surprises:
+Before you blast commands to 1000 nodes, heads up on these fun surprises: 💥
 
 1) RESERVED PORT EXHAUSTION (or: How I Learned to Stop Worrying and Love Mrsh)
 
@@ -120,7 +120,7 @@ to 300 nodes. Spoiler: sadness.
 Multiple concurrent pdsh sessions on one machine? High fanout? You'll run
 dry faster than a camel in the Sahara.
 
-Good news: mrsh and mqsh don't use reserved ports, so they laugh in the
+✅ Good news: mrsh and mqsh don't use reserved ports, so they laugh in the
 face of this limitation.
 
 2) TCP WRAPPERS: THE TRIPLE THREAT
@@ -145,7 +145,7 @@ set SYSLOG severity to something that doesn't scream at a remote loghost.
 Can't do that? Lower your fanout with --with-fanout=N during configure.
 
 +---------------------+
-| THEORY OF OPERATION |
+| 🧠 THEORY OF OPERATION |
 +---------------------+
 We'll explain using rsh, but this applies to all shell services (ssh, krb4,
 qsh, etc.) with some extra security sauce depending on the service.
@@ -164,19 +164,19 @@ long connecting (or running, if you asked for that). Slow pokes get
 terminated.
 
 Pressed ^C once? You'll see which threads are connected. Press ^C again
-immediately? Game over, man.
+immediately? 🎮 Game over, man.
 
 +--------+
-| AUTHOR |
+| 👨‍💻 AUTHOR |
 +--------+
 Jim Garlick <garlick@llnl.gov>
 
-Got suggestions? Found a bug? Just want to brag about your 10,000-node
-cluster? Drop a line! It's always cool to hear from folks using pdsh in
+Got suggestions? Found a bug? 🐛 Just want to brag about your 10,000-node
+cluster? 🎯 Drop a line! It's always cool to hear from folks using pdsh in
 the wild.
 
 +------+
-| NOTE |
+| 📝 NOTE |
 +------+
 This product includes software developed by the University of California,
 Berkeley and its contributors. We've modified it, so any bugs are
