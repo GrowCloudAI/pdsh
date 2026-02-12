@@ -1,186 +1,216 @@
-+-------------+
-| 📖 Description |
-+-------------+
-Ever wished you could run the same command on 100 servers simultaneously
-without breaking a sweat? Meet pdsh: your new best friend for parallel
-remote execution. 🚀 Think of it as the Swiss Army knife of distributed shell
-commands, minus the tiny scissors you never use.
+```
+ ____   ____  ____  _   _
+|  _ \ |  _ \/ ___|| | | |
+| |_) || | | \___ \| |_| |
+|  __/ | |_| |___) |  _  |
+|_|    |____/|____/|_| |_|
 
-Pdsh is a multithreaded remote shell client that fires off commands to
-multiple hosts in parallel. 💪 It's like having your own personal army of
-terminal windows, except they actually coordinate. Choose your weapon:
-classic rsh, Kerberos IV, or everyone's favorite, ssh.
+Parallel Distributed Shell
+```
 
-⚡ TL;DR: One command, many machines, zero patience required.
+<div align="center">
 
-See the man page in the doc directory for usage information (yes, we
-actually wrote one).
+🚀 **One Command. Many Machines. Zero Patience Required.** ⚡
 
-+---------------+
-| ⚙️ Configuration |
-+---------------+
+</div>
 
-Pdsh harnesses the power of GNU autoconf, which means it'll figure out
-what works on your system like a caffeinated detective. Dynamically
-loadable modules for each shell service get compiled based on what you've
-got installed. By default, we'll build rsh, Kerberos IV, and SDR support
-(for you lucky IBM SP owners) if the system supports them.
+---
 
-The README.modules file contains all the juicy details about each module,
-including what they need and which ones don't play nice together (like
-cats at a vet's office).
+## 📖 What is PDSH?
 
-If your system is allergic to dynamically loadable modules, no worries!
-Just use --enable-static-modules to bake everything in statically.
+Ever wished you could run the same command on **100 servers simultaneously** without breaking a sweat? Meet **pdsh**: your new best friend for parallel remote execution.
 
-To configure with your preferred modules:
+Think of it as the **Swiss Army knife of distributed shell commands**, minus the tiny scissors you never use.
 
+### ✨ Key Features
+
+- 🎯 **Multithreaded Execution** - Commands fire off in parallel to multiple hosts
+- 🔐 **Multiple Protocols** - Choose your weapon: `rsh`, `Kerberos IV`, or `ssh`
+- 💪 **High Performance** - Like having your own personal army of terminal windows that actually coordinate
+- 🎛️ **Configurable Fanout** - Control how many hosts get hit simultaneously
+- 🌐 **Group Management** - Organize hosts with genders, dshgroups, or netgroups
+
+> 💡 **TL;DR**: One command, many machines, zero patience required.
+
+📚 See the man page in the `doc/` directory for detailed usage information.
+
+---
+
+## ⚙️ Configuration
+
+Pdsh harnesses the power of **GNU autoconf**, which means it'll figure out what works on your system like a caffeinated detective. Dynamically loadable modules for each shell service get compiled based on what you've got installed.
+
+By default, we'll build `rsh`, `Kerberos IV`, and `SDR` support (for you lucky IBM SP owners) if the system supports them.
+
+📘 The `README.modules` file contains all the juicy details about each module, including what they need and which ones don't play nice together.
+
+### 🛠️ Build Configuration
+
+If your system is allergic to dynamically loadable modules, no worries! Just use `--enable-static-modules` to bake everything in statically.
+
+```bash
 ./configure [options]
+```
 
---without-rsh
-	Disable BSD rcmd(3). Who uses rsh these days anyway? (Don't answer that.)
+### 📋 Configuration Options
 
---with-ssh
-        Enable ssh(1) support. Because sometimes you care about security.
+#### 🔌 Connection Methods
 
---with-machines=/path/to/machines
-	Use a flat file of machine names for -a instead of that fancy genders thing.
+| Option | Description |
+|--------|-------------|
+| `--without-rsh` | Disable BSD rcmd(3). Who uses rsh these days anyway? |
+| `--with-ssh` | Enable ssh(1) support. Because sometimes you care about security. |
+| `--with-mrsh` | Enable mrsh(1) remote shell service support. The "m" stands for "more." |
+| `--with-slurm` | Support running pdsh under SLURM allocation. For when your HPC cluster needs some TLC. |
 
---with-genders
-        Enable genders database support via the genders(3) library. For the
-        -i option to work its magic, your genders database needs alternate
-        node names in the "altname" attribute. No, we won't judge your
-        naming scheme.
+#### 🗂️ Host Management
 
---with-dshgroups
-		Enable dsh-style group files in ~/.dsh/group/groupname or
-		/etc/dsh/group/groupname. Perfect for organizing your machines
-		like you organize your playlists. Use -g/-X to target or exclude
-		host groups.
+| Option | Description |
+|--------|-------------|
+| `--with-machines=/path` | Use a flat file of machine names for `-a` instead of that fancy genders thing. |
+| `--with-genders` | Enable genders database support via the genders(3) library. For the `-i` option to work its magic, your genders database needs alternate node names in the "altname" attribute. |
+| `--with-dshgroups` | Enable dsh-style group files in `~/.dsh/group/groupname` or `/etc/dsh/group/groupname`. Perfect for organizing your machines like you organize your playlists. Use `-g`/`-X` to target or exclude host groups. |
+| `--with-netgroup` | Enable netgroups (via `/etc/netgroup` or NIS) for building target host lists using `-g`/`-X`. It's like speed dial, but for servers. |
+| `--with-nodeupdown` | Enable dynamic elimination of down nodes through nodeupdown(3). No more shouting into the void at dead hosts! |
 
---with-netgroup
-		Enable netgroups (via /etc/netgroup or NIS) for building target host
-		lists using -g/-X. It's like speed dial, but for servers.
+#### ⚡ Performance Tuning
 
---with-nodeupdown
-        Enable dynamic elimination of down nodes through nodeupdown(3).
-        No more shouting into the void at dead hosts!
+| Option | Description |
+|--------|-------------|
+| `--with-fanout=N` | Specify default fanout (default: **32**). That's how many hosts get hit simultaneously. Think of it as your parallelism knob. Turn to 11? |
+| `--with-timeout=N` | Set default connect timeout in seconds (default: **10**). Because ain't nobody got time for slow connections. |
 
---with-mrsh
-        Enable mrsh(1) remote shell service support. The "m" stands for "more."
+#### 🎨 User Experience
 
---with-slurm
-	Support running pdsh under SLURM allocation. For when your HPC cluster
-	needs some TLC.
+| Option | Description |
+|--------|-------------|
+| `--with-readline` | Use GNU readline for interactive mode. Arrow keys are nice, right? |
 
---with-fanout=N
-	Specify default fanout (default is 32). That's how many hosts get hit
-	simultaneously. Think of it as your parallelism knob. Turn to 11?
+### ⚠️ Module Conflicts
 
---with-timeout=N
-	Set default connect timeout in seconds (default is 10). Because ain't
-	nobody got time for slow connections.
+**WARNING**: Some options conflict because they do the same thing in different ways (like `genders` and `nodeattr` both claiming the `-g` option). If you try to statically compile conflicting modules, the build will politely refuse.
 
---with-readline
-	Use GNU readline for interactive mode. Arrow keys are nice, right?
+📖 Check the man page for the full relationship drama between modules.
 
-WARNING: Some options conflict because they do the same thing in different
-ways (like genders and nodeattr both claiming the -g option). If you try to
-statically compile conflicting modules, the build will politely refuse.
-Check the man page for the full relationship drama between modules.
+---
 
-+------------+
-| 🔨 INSTALLING |
-+------------+
+## 🔨 Installation
+
+```bash
 make
 make install
+```
 
-🎉 Plot twist: pdsh installs WITHOUT setuid permissions by default! This is
-because most rcmd protocols don't actually need root. Democracy wins!
+### 🎉 Default Permissions
 
-However, if you're old school and using "rcmd/rsh" or "rcmd/qsh" modules,
-you'll need to grant pdsh and pdcp the keys to the kingdom:
+**Plot twist**: pdsh installs **WITHOUT setuid permissions** by default! This is because most rcmd protocols don't actually need root. Democracy wins!
 
- > chown root PREFIX/bin/pdsh PREFIX/bin/pdcp
- > chmod 4755 PREFIX/bin/pdsh PREFIX/bin/pdcp
+### 🔐 Old School Setup (rsh/qsh only)
 
-+---------+
-| ⚠️ GOTCHAS |
-+---------+
+However, if you're old school and using `rcmd/rsh` or `rcmd/qsh` modules, you'll need to grant pdsh and pdcp the keys to the kingdom:
+
+```bash
+chown root PREFIX/bin/pdsh PREFIX/bin/pdcp
+chmod 4755 PREFIX/bin/pdsh PREFIX/bin/pdcp
+```
+
+---
+
+## ⚠️ Gotchas & Performance Tips
 
 Before you blast commands to 1000 nodes, heads up on these fun surprises: 💥
 
-1) RESERVED PORT EXHAUSTION (or: How I Learned to Stop Worrying and Love Mrsh)
+### 1️⃣ Reserved Port Exhaustion
+**Or: How I Learned to Stop Worrying and Love Mrsh**
 
-When using rsh, krb4, qsh, or ssh, pdsh needs reserved sockets via
-rresvport() - one per connection, two if you want stderr separated. There's
-a pool of 256 reserved ports. Do the math on what happens when you fanout
-to 300 nodes. Spoiler: sadness.
+When using `rsh`, `krb4`, `qsh`, or `ssh`, pdsh needs reserved sockets via `rresvport()` - one per connection, two if you want stderr separated.
 
-Multiple concurrent pdsh sessions on one machine? High fanout? You'll run
-dry faster than a camel in the Sahara.
+🔢 **The Problem**: There's a pool of **256 reserved ports**. Do the math on what happens when you fanout to 300 nodes. Spoiler: sadness.
 
-✅ Good news: mrsh and mqsh don't use reserved ports, so they laugh in the
-face of this limitation.
+Multiple concurrent pdsh sessions on one machine? High fanout? You'll run dry faster than a camel in the Sahara. 🐪
 
-2) TCP WRAPPERS: THE TRIPLE THREAT
+✅ **The Solution**: `mrsh` and `mqsh` don't use reserved ports, so they laugh in the face of this limitation.
 
-If your remote shell service uses TCP wrappers, watch out for three
-bottlenecks that can ruin your day: IDENT, DNS, and SYSLOG.
+### 2️⃣ TCP Wrappers: The Triple Threat
 
-- If hosts.allow has "user@" (like "in.rshd : ALL@ALL : ALLOW") and IDENT
-  is enabled, every connection triggers an IDENT query back to you. High
-  fanout = IDENT server has a meltdown.
+If your remote shell service uses TCP wrappers, watch out for three bottlenecks that can ruin your day:
 
-- TCP wrappers doing DNS lookups for each connection? Say hello to your
-  overwhelmed DNS server.
+| Bottleneck | Problem | Impact |
+|------------|---------|--------|
+| 🔍 **IDENT** | Enabled with `user@` in hosts.allow (like `in.rshd : ALL@ALL : ALLOW`) | Every connection triggers an IDENT query back to you. High fanout = IDENT server has a meltdown. |
+| 🌐 **DNS** | TCP wrappers doing DNS lookups for each connection | Say hello to your overwhelmed DNS server. |
+| 📝 **SYSLOG** | Every connection logging to syslog | Hope you like gigabyte-sized logs and a very unhappy syslogd. |
 
-- Every connection logging to syslog? Hope you like gigabyte-sized logs
-  and a very unhappy syslogd.
+#### 🛡️ Mitigation Strategies
 
 If your security policy allows, configure TCP wrappers to chill out a bit:
-skip IDENT, DNS, and SYSLOG checks on remote shell connections. Use IP
-addresses or subnets instead of names, ditch the "PARANOID" option, and
-set SYSLOG severity to something that doesn't scream at a remote loghost.
-Can't do that? Lower your fanout with --with-fanout=N during configure.
 
-+---------------------+
-| 🧠 THEORY OF OPERATION |
-+---------------------+
-We'll explain using rsh, but this applies to all shell services (ssh, krb4,
-qsh, etc.) with some extra security sauce depending on the service.
+- ✂️ Skip IDENT, DNS, and SYSLOG checks on remote shell connections
+- 🔢 Use IP addresses or subnets instead of names
+- 🚫 Ditch the "PARANOID" option
+- 📊 Set SYSLOG severity to something that doesn't scream at a remote loghost
 
-Each connection gets its own thread (one thread per node). The thread opens
-an MT-safe rcmd-like connection, grabs stdin and stderr streams, then bows
-out gracefully.
+**Can't do that?** Lower your fanout with `--with-fanout=N` during configure.
 
-The main thread spawns threads up to the fanout limit, then waits around
-like a patient parent. When a thread finishes, it signals a condition
-variable, and the main thread launches a new one to keep the parallelism
-party going. Rinse and repeat until all commands are done.
+---
 
-A timeout thread plays hall monitor, watching for threads that take too
-long connecting (or running, if you asked for that). Slow pokes get
-terminated.
+## 🧠 Theory of Operation
 
-Pressed ^C once? You'll see which threads are connected. Press ^C again
-immediately? 🎮 Game over, man.
+We'll explain using `rsh`, but this applies to all shell services (`ssh`, `krb4`, `qsh`, etc.) with some extra security sauce depending on the service.
 
-+--------+
-| 👨‍💻 AUTHOR |
-+--------+
-Jim Garlick <garlick@llnl.gov>
+### 🔄 Thread Architecture
 
-Got suggestions? Found a bug? 🐛 Just want to brag about your 10,000-node
-cluster? 🎯 Drop a line! It's always cool to hear from folks using pdsh in
-the wild.
+```
+┌─────────────────────────────────────┐
+│         Main Thread                 │
+│  (Spawns threads up to fanout)      │
+└──────────┬──────────────────────────┘
+           │
+           ├──► [Thread 1] ──► Host 1
+           ├──► [Thread 2] ──► Host 2
+           ├──► [Thread N] ──► Host N
+           │
+           └──► [Timeout Thread] 👮
+                (Terminates slow threads)
+```
 
-+------+
-| 📝 NOTE |
-+------+
-This product includes software developed by the University of California,
-Berkeley and its contributors. We've modified it, so any bugs are
-definitely ours.
+1. **Per-Connection Threading** - Each connection gets its own thread (one thread per node)
+2. **MT-Safe Connections** - Each thread opens an MT-safe rcmd-like connection
+3. **Stream Management** - Threads grab stdin and stderr streams, then bow out gracefully
+4. **Dynamic Spawning** - Main thread waits like a patient parent. When a thread finishes, it signals a condition variable, and the main thread launches a new one
+5. **Timeout Management** - A timeout thread plays hall monitor, watching for threads that take too long
 
-Also: The PDSH software package has ZERO affiliation with the Democratic
-Party of Albania (www.pdsh.org). Just to be crystal clear about that.
+### ⌨️ Interrupt Handling
+
+- **Press ^C once**: You'll see which threads are connected
+- **Press ^C twice**: 🎮 Game over, man
+
+---
+
+## 👨‍💻 Author
+
+**Jim Garlick** <garlick@llnl.gov>
+
+Got suggestions? Found a bug? 🐛 Just want to brag about your 10,000-node cluster? 🎯 Drop a line! It's always cool to hear from folks using pdsh in the wild.
+
+---
+
+## 📝 Legal Notices
+
+### 📜 BSD Components
+
+This product includes software developed by the University of California, Berkeley and its contributors. We've modified it, so any bugs are definitely ours.
+
+### 🇦🇱 Important Disclaimer
+
+The **PDSH software package** has **ZERO affiliation** with the Democratic Party of Albania (www.pdsh.org). Just to be crystal clear about that. 😅
+
+---
+
+<div align="center">
+
+**Made with ❤️ by the HPC community**
+
+⭐ Star this repo if pdsh makes your life easier! ⭐
+
+</div>
