@@ -1,231 +1,177 @@
-# 🚀 PDSH - Parallel Distributed Shell
++-------------+
+| Description |
++-------------+
+Pdsh is a multithreaded remote shell client which executes commands on
+multiple remote hosts in parallel.  Pdsh can use several different
+remote shell services, including standard "rsh", Kerberos IV, and ssh.
 
-<div align="center">
+See the man page in the doc directory for usage information.
 
-**Execute commands on multiple remote hosts in parallel**
++---------------+
+| Configuration |
++---------------+
 
-[![License](https://img.shields.io/badge/License-GPL-blue.svg)](COPYING)
-[![C](https://img.shields.io/badge/Language-C-brightgreen.svg)](src/)
-[![Platform](https://img.shields.io/badge/Platform-Linux-lightgrey.svg)]()
+Pdsh uses GNU autoconf for configuration.  Dynamically loadable
+modules of each shell service (as well as other features) will be
+compiled based on configuration.  By default, rsh, Kerberos IV, 
+and SDR (for IBM SPs) will be compiled if they exist on the system.
 
-*A multithreaded remote shell client for efficient cluster management*
+The README.modules file distributed with pdsh contains a description
+of each module available, as well as its requirements and/or 
+conflicts.
 
-[Features](#-features) • [Installation](#-installation) • [Configuration](#-configuration) • [Usage](#-usage) • [Contributing](#-contributing)
+If your system does not support dynamically loadable modules, you
+may compile modules in statically using the --enable-static-modules
+option.
 
-</div>
+To configure in additional feature modules:
 
----
+./configure [options]
 
-## 📖 Description
+--without-rsh 
+	Disable support for BSD rcmd(3) (standard rsh).
 
-**Pdsh** is a high-performance, multithreaded remote shell client that executes commands on multiple remote hosts **in parallel**. Built for cluster environments, pdsh dramatically reduces the time needed to manage large numbers of systems.
+--with-ssh
+        Enable support of ssh(1) remote shell service.
 
-### 🎯 Key Features
+--with-machines=/path/to/machines
+	Use a flat file list of machine names for -a instead of genders
 
-- ⚡ **Parallel Execution** - Run commands on hundreds of nodes simultaneously
-- 🔌 **Multiple Protocols** - Support for rsh, Kerberos IV, SSH, and more
-- 🧵 **Multithreaded** - Efficient connection handling with configurable fanout
-- 🎛️ **Flexible Targeting** - Use genders, netgroups, dsh groups, or simple host lists
-- 📊 **Smart Output** - Consolidated results with hostname prefixes
-- ⏱️ **Timeout Control** - Automatic handling of unresponsive nodes
+--with-genders
+        Enable support of a genders database through the genders(3)
+        library.  For pdsh's -i option to function properly, the genders
+        database must have alternate node names listed as the value of
+        the "altname" attribute. 
 
----
+--with-dshgroups
+		Enable support of dsh-style group files in ~/.dsh/group/groupname
+		or /etc/dsh/group/groupname. Allows use of -g/-X to target
+		or exclude hosts in dsh group files.
 
-## 🏗️ Installation
+--with-netgroup
+		Enable use of netgroups (via /etc/netgroup or NIS) to build lists
+		of target hosts using -g/-X to include/exclude hosts.
 
-### Quick Start
+--with-nodeupdown
+        Enable support of dynamic elimination of down nodes through
+        the nodeupdown(3) library. 
 
-```bash
-./configure
+--with-mrsh
+        Enable support of mrsh(1) remote shell service.
+   
+--with-slurm
+	Support running pdsh under SLURM allocation.
+
+--with-fanout=N
+	Specify default fanout (default is 32).
+
+--with-timeout=N
+	Set default connect timeout (default is 10 seconds).
+
+--with-readline
+	Use the GNU readline library to parse input in interactive mode.
+
+Note that a number of the above configurations options may "conflict"
+with each other because they perform identical operations.  For
+example, genders and nodeattr both support the -g option.  If several
+modules are installed that support identical options, the options will
+default to one particular module.  Static compilation of modules will
+fail if conflicting modules are selected.  See the man page in this
+directory for details on which modules conflict.
+
++------------+
+| INSTALLING |
++------------+
 make
 make install
-```
 
-### 🔐 Setuid Configuration (for rsh/qsh)
-
-If you're using the `rcmd/rsh` or `rcmd/qsh` modules, set pdsh as setuid root:
-
-```bash
-chown root PREFIX/bin/pdsh PREFIX/bin/pdcp
-chmod 4755 PREFIX/bin/pdsh PREFIX/bin/pdcp
-```
-
-> **Note:** Most modern rcmd protocols (like SSH) don't require root permissions.
-
----
-
-## ⚙️ Configuration
-
-Pdsh uses GNU autoconf for flexible module configuration. Dynamically loadable modules are compiled based on your system's capabilities and selected options.
-
-### 🔧 Core Configuration Options
-
-#### Remote Shell Services
-
-| Option | Description |
-|--------|-------------|
-| `--without-rsh` | ❌ Disable BSD rcmd(3) / standard rsh |
-| `--with-ssh` | 🔑 Enable SSH remote shell service |
-| `--with-mrsh` | 🔐 Enable mrsh(1) remote shell service |
-
-#### Host Targeting Methods
-
-| Option | Description |
-|--------|-------------|
-| `--with-machines=/path` | 📝 Use flat file list for `-a` option |
-| `--with-genders` | 🏷️ Enable genders database support via genders(3) |
-| `--with-dshgroups` | 📁 Enable dsh-style group files (`~/.dsh/group/`) |
-| `--with-netgroup` | 🌐 Use netgroups (`/etc/netgroup` or NIS) |
-
-#### Advanced Features
-
-| Option | Description |
-|--------|-------------|
-| `--with-nodeupdown` | 💚 Auto-eliminate down nodes via nodeupdown(3) |
-| `--with-slurm` | 🖥️ Support running under SLURM allocation |
-| `--with-readline` | ⌨️ GNU readline for interactive mode |
-| `--with-fanout=N` | 🌊 Set default fanout (default: 32) |
-| `--with-timeout=N` | ⏲️ Set connect timeout in seconds (default: 10) |
-
-#### Static Modules
-
-For systems without dynamic module support:
-
-```bash
-./configure --enable-static-modules
-```
-
-### 📚 Module Documentation
-
-See [`README.modules`](README.modules) for detailed information about each module, including requirements and conflicts.
-
-> ⚠️ **Conflict Warning:** Some modules provide identical options (e.g., `-g`). Static compilation will fail if conflicting modules are selected. Dynamic modules will default to one implementation.
-
----
-
-## 🎮 Usage
-
-See the comprehensive man pages for detailed usage:
-
-- 📘 `man pdsh` - Main pdsh command
-- 📙 `man pdcp` - Parallel distributed copy
-- 📗 `man dshbak` - Format pdsh output
-
-### Quick Examples
-
-```bash
-# Run command on multiple hosts
-pdsh -w node[1-10] uptime
-
-# Use SSH protocol
-pdsh -R ssh -w host1,host2,host3 'df -h'
-
-# Target all hosts with fanout of 64
-pdsh -a -f 64 'free -m'
-
-# Use genders/groups
-pdsh -g compute 'cat /proc/cpuinfo | grep MHz'
-```
-
----
-
-## ⚠️ Important Considerations
-
-### 🔌 Reserved Sockets
-
-When using rsh, krb4, qsh, or ssh, pdsh uses **reserved sockets** (obtained via `rresvport()`). With a typical pool of 256 sockets:
-
-- High fanout settings may exhaust the socket pool
-- Multiple simultaneous pdsh instances can cause conflicts
-- **Solution:** Use mrsh/mqsh (no reserved ports) or reduce fanout
-
-### 🛡️ TCP Wrappers Bottlenecks
-
-TCP wrappers can create performance issues at scale:
-
-- **IDENT queries** - Each connection triggers reverse lookup
-- **DNS lookups** - Can overwhelm DNS servers with high fanout
-- **SYSLOG** - Excessive logging to remote syslog hosts
-
-**Recommendations:**
-
-- ✅ Configure without `PARANOID` option
-- ✅ Use IP addresses or subnets (no names or `user@` prefix)
-- ✅ Set SYSLOG severity to reduce remote logging
-- ✅ Or reduce default fanout: `--with-fanout=N`
-
----
-
-## 🏛️ Architecture
-
-### Theory of Operation
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                     Main Thread                          │
-│  • Maintains fanout number of active connections        │
-│  • Waits on condition variable from worker threads      │
-│  • Spawns new threads as workers complete               │
-└────────────┬────────────────────────────────────────────┘
-             │
-             ├──► Worker Thread 1  ──► [Node 1] (rcmd/ssh/etc)
-             ├──► Worker Thread 2  ──► [Node 2]
-             ├──► Worker Thread N  ──► [Node N]
-             │
-             └──► Timeout Thread
-                  • Monitors connection timeouts
-                  • Enforces command execution limits
-                  • Terminates unresponsive threads
-```
-
-### Thread Lifecycle
-
-1. **Thread Creation** - One thread per host connection
-2. **Connection** - MT-safe rcmd-like function establishes shell
-3. **I/O Handling** - Returns stdin/stderr streams
-4. **Termination** - Signals condition variable on completion
-
-### 🎹 Interactive Control
-
-- `Ctrl+C` (once) - List currently connected threads
-- `Ctrl+C` (twice) - Terminate pdsh immediately
-
----
-
-## 👨‍💻 Author
-
-**Jim Garlick** - <garlick@llnl.gov>
-
-Developed at Lawrence Livermore National Laboratory
-
-### 📬 Feedback
-
-We'd love to hear from you! Please send:
-
-- 💡 Feature suggestions
-- 🐛 Bug reports
-- 📊 Cluster deployment stories (how many nodes?)
-
----
-
-## 📜 License
-
-This project is licensed under the GPL - see the [COPYING](COPYING) file for details.
-
-### Acknowledgments
-
-This product includes software developed by the **University of California, Berkeley** and its contributors. Modifications have been made; bugs are probably ours.
-
----
-
-## ⚡ Fun Fact
-
-The PDSH software package has **no affiliation** with the Democratic Party of Albania ([www.pdsh.org](http://www.pdsh.org)). 🇦🇱
-
----
-
-<div align="center">
-
-**Made with ❤️ for cluster administrators everywhere**
-
-</div>
+By default, pdsh is now installed without setuid permissions. This
+is because, for the majority of the rcmd connect protocols, root
+permissions are not necessarily needed. If you are using either of
+the "rcmd/rsh" or "rcmd/qsh" modules, you will need to change the
+permissions of pdsh and pdcp to be setuid root after the install.
+For example:
+
+ > chown root PREFIX/bin/pdsh PREFIX/bin/pdcp
+ > chmod 4755 PREFIX/bin/pdsh PREFIX/bin/pdcp
+
++---------+
+| GOTCHAS |
++---------+
+
+Watch out for the following gotchas:
+
+1) When executing remote commands via rsh, krb4, qsh, or ssh, pdsh
+uses one reserved socket for each active connection, two if it is
+maintaining a separate connection for stderr.  It obtains these
+sockets by calling rresvport(), which normally draws from a pool of
+256 sockets.  You may exhaust these if multiple pdsh's are running
+simultanously on a machine, or if the fanout is set too high.  Mrsh 
+and mqsh do not use reserved ports, and therefore are not affected
+this problem as severely. 
+
+2) When pdsh is using a remote shell service that is wrapped with TCP
+wrappers, there are three areas where bottlenecks can be created:
+IDENT, DNS, and SYSLOG.  If your hosts.allow includes "user@", e.g.
+"in.rshd : ALL@ALL : ALLOW" and TCP wrappers is configured to support
+IDENT, each simultaneous remote shell connection will result in an
+IDENT query back to the source.  For large fanouts this can quickly
+overwhelm the source.  Similarly, if TCP wrappers is configured to
+query the DNS on every connection, pdsh may overwhelm the DNS server.
+Finally, if every remote shell connection results in a remote syslog
+entry, syslogd on your loghost may be overwhelmed and logs may grow
+excessively long.
+
+If local security policy permits, consider configuring TCP wrappers to
+avoid calling IDENT, DNS, or SYSLOG on every remote shell connection.
+Configuring without the "PARANOID" option (which requires all
+connections to be registered in the DNS), permitting a simple list of
+IP addresses or a subnet (no names, and no user@ prefix), and setting
+the SYSLOG severity for the remote shell service to a level that is
+not remotely logged will avoid these pitfalls.  If these actions are
+not possible, you may wish to reduce pdsh's default fanout (configure
+--with-fanout=N).
+
++---------------------+
+| THEORY OF OPERATION |
++---------------------+
+We will generalize for the common remote shell service rsh.  The
+following is similar for all other shell services (ssh, krb4, qsh,
+etc.), but other shell services may include additional security or
+features.
+
+A thread is created for each rsh connection to a node.  Each thread
+opens a connection using an MT-safe rcmd-like function, returns
+stdin and stderr streams, then terminates.
+
+The mainline starts fanout number of rsh threads and waits on a
+condition variable that is signalled by the rsh threads as they
+terminate.  When the condition variable is signalled, the main thread
+starts a new rsh thread to maintain the fanout, until all remote
+commands have been executed.
+
+A timeout thread is created that monitors the state of the threads and
+terminates any that take too much time connecting or, if requested on
+the command line, take too long to complete.
+
+Typing ^C causes pdsh to list threads that are in the connected state.
+Another ^C immediately following the first one terminates the program.
+
++--------+
+| AUTHOR |
++--------+
+Jim Garlick <garlick@llnl.gov>
+
+Please send suggestions, bug reports, or just a note letting me know
+that you are using pdsh (it would be interesting to hear how many
+nodes are in your cluster).
+
++------+
+| NOTE |
++------+
+This product includes software developed by the University of
+California, Berkeley and its contributors.  Modifications have been
+made and bugs are probably mine.
+
+The PDSH software package has no affiliation with the Democratic Party
+of Albania (www.pdsh.org).
