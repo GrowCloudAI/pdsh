@@ -65,50 +65,76 @@
 #define DEFAULT_MAX_USERNAME_LENGTH 16
 
 #define OPT_USAGE_DSH "\
-Usage: pdsh [-options] command ...\n\
--S                return largest of remote command return values\n\
--k                fail fast on connect failure or non-zero return code\n"
+\n\
+╔═══════════════════════════════════════════════════════════════════════════╗\n\
+║  🚀 PDSH - Parallel Distributed Shell                                    ║\n\
+║  Execute commands on multiple remote hosts in parallel                   ║\n\
+╚═══════════════════════════════════════════════════════════════════════════╝\n\
+\n\
+📋 Usage: pdsh [-options] command ...\n\
+\n\
+🎯 DSH-Specific Options:\n\
+  -S              ⬆️  Return largest of remote command return values\n\
+  -k              ⚡ Fail fast on connect failure or non-zero return code\n"
 
 /* -s option only useful on AIX */
 #if	HAVE_MAGIC_RSHELL_CLEANUP
 #define OPT_USAGE_STDERR "\
--s                separate stderr and stdout\n"
+  -s              🔀 Separate stderr and stdout\n"
 #endif
 
 
 #define OPT_USAGE_PCP "\
-Usage: pdcp [-options] src [src2...] dest\n\
--r                recursively copy files\n\
--p                preserve modification time and modes\n\
--e PATH           specify the path to pdcp on the remote machine\n"
+\n\
+╔═══════════════════════════════════════════════════════════════════════════╗\n\
+║  📦 PDCP - Parallel Distributed Copy                                     ║\n\
+║  Copy files to multiple remote hosts in parallel                         ║\n\
+╚═══════════════════════════════════════════════════════════════════════════╝\n\
+\n\
+📋 Usage: pdcp [-options] src [src2...] dest\n\
+\n\
+📁 PCP-Specific Options:\n\
+  -r              🔄 Recursively copy files\n\
+  -p              🔒 Preserve modification time and modes\n\
+  -e PATH         🛤️  Specify the path to pdcp on the remote machine\n"
 /* undocumented "-y"  target must be directory option */
 /* undocumented "-z"  run pdcp server option */
 /* undocumented "-Z"  run pdcp client option */
 
 #define OPT_USAGE_RPCP "\
-Usage: rpdcp [-options] src [src2...] dir\n\
--r                recursively copy files\n\
--p                preserve modification time and modes\n"
+\n\
+╔═══════════════════════════════════════════════════════════════════════════╗\n\
+║  📥 RPDCP - Reverse Parallel Distributed Copy                            ║\n\
+║  Copy files from multiple remote hosts in parallel                       ║\n\
+╚═══════════════════════════════════════════════════════════════════════════╝\n\
+\n\
+📋 Usage: rpdcp [-options] src [src2...] dir\n\
+\n\
+📁 RPCP-Specific Options:\n\
+  -r              🔄 Recursively copy files\n\
+  -p              🔒 Preserve modification time and modes\n"
 /* undocumented "-y"  target must be directory option */
 /* undocumented "-z"  run pdcp server option */
 /* undocumented "-Z"  run pdcp client option */
 
 #define OPT_USAGE_COMMON "\
--h                output usage menu and quit\n\
--V                output version information and quit\n\
--q                list the option settings and quit\n\
--b                disable ^C status feature (batch mode)\n\
--d                enable extra debug information from ^C status\n\
--l user           execute remote commands as user\n\
--t seconds        set connect timeout (default is 10 sec)\n\
--u seconds        set command timeout (no default)\n\
--f n              use fanout of n nodes\n\
--w host,host,...  set target node list on command line\n\
--x host,host,...  set node exclusion list on command line\n\
--R name           set rcmd module to name\n\
--M name,...       select one or more misc modules to initialize first\n\
--N                disable hostname: labels on output lines\n\
--L                list info on all loaded modules and exit\n"
+\n\
+ℹ️  General Options:\n\
+  -h              ❓ Output usage menu and quit\n\
+  -V              📌 Output version information and quit\n\
+  -q              📊 List the option settings and quit\n\
+  -b              🔇 Disable ^C status feature (batch mode)\n\
+  -d              🐛 Enable extra debug information from ^C status\n\
+  -l user         👤 Execute remote commands as user\n\
+  -t seconds      ⏱️  Set connect timeout (default is 10 sec)\n\
+  -u seconds      ⏰ Set command timeout (no default)\n\
+  -f n            🌐 Use fanout of n nodes\n\
+  -w host,host... 🎯 Set target node list on command line\n\
+  -x host,host... ⛔ Set node exclusion list on command line\n\
+  -R name         🔧 Set rcmd module to name\n\
+  -M name,...     🧩 Select one or more misc modules to initialize first\n\
+  -N              🏷️  Disable hostname: labels on output lines\n\
+  -L              📚 List info on all loaded modules and exit\n"
 /* undocumented "-T testcase" option */
 /* undocumented "-Q" option */
 /* undocumented "-K" option -  keep domain name in output */
@@ -1172,7 +1198,14 @@ static void _usage(opt_t * opt)
 
     mod_print_all_options(18);
 
-    err("available rcmd modules: %s\n", _rcmd_module_list(buf, 1024));
+    err("\n");
+    err("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    err("🔌 Available rcmd modules: %s\n", _rcmd_module_list(buf, 1024));
+    err("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    err("\n");
+    err("💡 For more details, see: man pdsh\n");
+    err("🐛 Report bugs at: https://github.com/chaos/pdsh\n");
+    err("\n");
 
     exit(1);
 }
