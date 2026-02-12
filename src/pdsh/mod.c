@@ -382,12 +382,32 @@ int mod_load_modules(const char *dir, opt_t *opt)
 static void
 _print_option_help(struct pdsh_module_option *p, int col)
 {
-    char buf[81];
+    char buf[256];
+    int ret;
 
     assert(p != NULL);
 
-    snprintf(buf, 81, "-%c %-*s %s\n", p->opt, col - 4,
-             (p->arginfo ? p->arginfo : ""), p->descr);
+    ret = snprintf(buf, sizeof(buf), "    -%c %-*s %s\n", p->opt, col - 4,
+                   (p->arginfo ? p->arginfo : ""), p->descr);
+
+    /*
+     * Handle potential truncation gracefully.
+     * snprintf returns the number of characters that would have been written
+     * (excluding null terminator). If ret >= sizeof(buf), truncation occurred
+     * and snprintf already null-terminated at buf[255]. We ensure a newline
+     * before the null terminator for consistent output.
+     */
+    if (ret < 0) {
+        /* snprintf error - output empty line */
+        err("\n");
+        return;
+    }
+
+    if ((size_t)ret >= sizeof(buf)) {
+        /* Truncation occurred - ensure newline before null terminator */
+        buf[sizeof(buf) - 2] = '\n';
+        buf[sizeof(buf) - 1] = '\0';
+    }
 
     err("%s", buf);
 }

@@ -64,51 +64,90 @@
  */
 #define DEFAULT_MAX_USERNAME_LENGTH 16
 
+/*
+ *  Help text uses fixed-width box-drawing headers (77 chars).
+ *  This assumes minimum 80-column terminal width, which is standard
+ *  for modern terminals. Non-adaptive by design for consistent formatting.
+ */
 #define OPT_USAGE_DSH "\
-Usage: pdsh [-options] command ...\n\
--S                return largest of remote command return values\n\
--k                fail fast on connect failure or non-zero return code\n"
+\n\
+╔═══════════════════════════════════════════════════════════════════════════╗\n\
+║                      PDSH - Parallel Distributed Shell                    ║\n\
+╚═══════════════════════════════════════════════════════════════════════════╝\n\
+\n\
+USAGE\n\
+    pdsh [-options] command ...\n\
+\n\
+EXECUTION OPTIONS\n\
+    -S                Return largest of remote command return values\n\
+    -k                Fail fast on connect failure or non-zero return code\n"
 
 /* -s option only useful on AIX */
 #if	HAVE_MAGIC_RSHELL_CLEANUP
 #define OPT_USAGE_STDERR "\
--s                separate stderr and stdout\n"
+    -s                Separate stderr and stdout\n"
 #endif
 
 
 #define OPT_USAGE_PCP "\
-Usage: pdcp [-options] src [src2...] dest\n\
--r                recursively copy files\n\
--p                preserve modification time and modes\n\
--e PATH           specify the path to pdcp on the remote machine\n"
+\n\
+╔═══════════════════════════════════════════════════════════════════════════╗\n\
+║                      PDCP - Parallel Distributed Copy                     ║\n\
+╚═══════════════════════════════════════════════════════════════════════════╝\n\
+\n\
+USAGE\n\
+    pdcp [-options] src [src2...] dest\n\
+\n\
+COPY OPTIONS\n\
+    -r                Recursively copy files\n\
+    -p                Preserve modification time and modes\n\
+    -e PATH           Specify the path to pdcp on the remote machine\n"
 /* undocumented "-y"  target must be directory option */
 /* undocumented "-z"  run pdcp server option */
 /* undocumented "-Z"  run pdcp client option */
 
 #define OPT_USAGE_RPCP "\
-Usage: rpdcp [-options] src [src2...] dir\n\
--r                recursively copy files\n\
--p                preserve modification time and modes\n"
+\n\
+╔═══════════════════════════════════════════════════════════════════════════╗\n\
+║                    RPDCP - Reverse Parallel Distributed Copy              ║\n\
+╚═══════════════════════════════════════════════════════════════════════════╝\n\
+\n\
+USAGE\n\
+    rpdcp [-options] src [src2...] dir\n\
+\n\
+COPY OPTIONS\n\
+    -r                Recursively copy files\n\
+    -p                Preserve modification time and modes\n"
 /* undocumented "-y"  target must be directory option */
 /* undocumented "-z"  run pdcp server option */
 /* undocumented "-Z"  run pdcp client option */
 
 #define OPT_USAGE_COMMON "\
--h                output usage menu and quit\n\
--V                output version information and quit\n\
--q                list the option settings and quit\n\
--b                disable ^C status feature (batch mode)\n\
--d                enable extra debug information from ^C status\n\
--l user           execute remote commands as user\n\
--t seconds        set connect timeout (default is 10 sec)\n\
--u seconds        set command timeout (no default)\n\
--f n              use fanout of n nodes\n\
--w host,host,...  set target node list on command line\n\
--x host,host,...  set node exclusion list on command line\n\
--R name           set rcmd module to name\n\
--M name,...       select one or more misc modules to initialize first\n\
--N                disable hostname: labels on output lines\n\
--L                list info on all loaded modules and exit\n"
+\n\
+GENERAL OPTIONS\n\
+    -h                Display this help menu and exit\n\
+    -V                Display version information and exit\n\
+    -q                List option settings and exit\n\
+    -L                List info on all loaded modules and exit\n\
+\n\
+RUNTIME BEHAVIOR\n\
+    -b                Disable ^C status feature (batch mode)\n\
+    -d                Enable extra debug information from ^C status\n\
+    -l user           Execute remote commands as specified user\n\
+    -N                Disable hostname: labels on output lines\n\
+\n\
+TIMING & PERFORMANCE\n\
+    -t seconds        Set connect timeout (default: 10 sec)\n\
+    -u seconds        Set command timeout (no default)\n\
+    -f n              Set fanout to n nodes (parallel connections)\n\
+\n\
+HOST SELECTION\n\
+    -w host,host,...  Set target node list on command line\n\
+    -x host,host,...  Set node exclusion list on command line\n\
+\n\
+MODULE CONFIGURATION\n\
+    -R name           Set rcmd module to name\n\
+    -M name,...       Select one or more misc modules to initialize first\n"
 /* undocumented "-T testcase" option */
 /* undocumented "-Q" option */
 /* undocumented "-K" option -  keep domain name in output */
@@ -1170,9 +1209,30 @@ static void _usage(opt_t * opt)
 
     err(OPT_USAGE_COMMON);
 
-    mod_print_all_options(18);
+    if (mod_count(NULL) > 0) {
+        err("\n");
+        err("MODULE OPTIONS\n");
+        mod_print_all_options(18);
+    }
 
-    err("available rcmd modules: %s\n", _rcmd_module_list(buf, 1024));
+    err("\n");
+    err("AVAILABLE RCMD MODULES\n");
+    err("    %s\n", _rcmd_module_list(buf, 1024));
+
+    err("\n");
+    err("EXAMPLES\n");
+    if (personality == DSH) {
+        err("    pdsh -w host[0-10] uptime\n");
+        err("    pdsh -w node1,node2,node3 -x node2 date\n");
+        err("    pdsh -w ^hosts.txt \"df -h\"\n");
+    } else {
+        err("    pdcp -w host[0-10] file.txt /tmp/\n");
+        err("    pdcp -r -w node1,node2 /etc/config /backup/\n");
+    }
+
+    err("\n");
+    err("For more information, see the man page: man pdsh\n");
+    err("\n");
 
     exit(1);
 }
