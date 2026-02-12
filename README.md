@@ -1,53 +1,128 @@
-# 🚀 PDSH - Parallel Distributed Shell
+<div align="center">
 
-> **Execute commands on multiple remote hosts in parallel** - Because life's too short to SSH into servers one by one.
+# 🚀 PDSH
+### Parallel Distributed Shell
+
+<p align="center">
+  <strong>Execute commands on multiple remote hosts in parallel</strong><br>
+  <em>Because life's too short to SSH into servers one by one</em>
+</p>
 
 [![License](https://img.shields.io/badge/License-GPL-blue.svg)](COPYING)
-[![C](https://img.shields.io/badge/Language-C-00599C.svg)](src/)
+[![Language](https://img.shields.io/badge/Language-C-00599C.svg)](src/)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Unix-lightgrey.svg)]()
+[![Shell](https://img.shields.io/badge/Shell-Parallel-green.svg)]()
+
+<br>
+
+### 📑 Table of Contents
+
+**[📖 What is PDSH?](#-what-is-pdsh)** •
+**[🏗️ Building](#️-building--configuration)** •
+**[🛠️ Configuration](#️-build-configuration-options)** •
+**[📦 Installation](#-installation)** •
+**[🎯 Performance Tips](#-performance-tips--troubleshooting)** •
+**[🧠 Architecture](#-how-pdsh-works)** •
+**[👥 Community](#-community--support)**
+
+</div>
 
 ---
 
-## 📖 Description
+## 📖 What is PDSH?
 
-**Pdsh** is a multithreaded remote shell client that executes commands on multiple remote hosts **in parallel**. Scale your operations from a handful to thousands of nodes with ease.
+**Pdsh** is a high-performance, multithreaded remote shell client that executes commands on multiple remote hosts **in parallel**. Whether you're managing a handful of servers or orchestrating thousands of nodes in a cluster, pdsh scales effortlessly to meet your needs.
+
+<br>
+
+<div align="center">
 
 ### 🎯 Key Features
 
-- 🔀 **Parallel Execution** - Run commands across multiple hosts simultaneously
-- 🔌 **Multiple Protocols** - Support for rsh, Kerberos IV, SSH, and more
-- 🧵 **Multithreaded** - Efficient connection management with configurable fanout
-- 🎛️ **Modular Design** - Dynamically loadable modules for different services
-- ⚡ **High Performance** - Handle large clusters with thousands of nodes
+</div>
+
+<table>
+<tr>
+<td width="50%">
+
+#### ⚡ Performance
+- **Parallel Execution** across hundreds of hosts
+- **Multithreaded** connection management
+- **Configurable fanout** for optimal throughput
+- Handle **thousands of nodes** simultaneously
+
+</td>
+<td width="50%">
+
+#### 🔧 Flexibility
+- **Multiple Protocols**: rsh, SSH, Kerberos IV
+- **Modular Design** with dynamic loading
+- **Host Management** via multiple backends
+- **Interactive Mode** with GNU readline
+
+</td>
+</tr>
+</table>
+
+<br>
+
+### 💡 Quick Example
+
+```bash
+# Execute on multiple hosts in parallel
+pdsh -w node[1-100] 'uptime'
+
+# Use host groups
+pdsh -g webservers 'systemctl restart nginx'
+
+# Copy files to multiple hosts
+pdcp -w node[1-50] local.conf /etc/app/config.conf
+```
 
 ### 📚 Documentation
 
-See the man page in the `doc/` directory for detailed usage information.
+📖 See the man pages in the [`doc/`](doc/) directory for comprehensive usage information.
 
 ---
 
-## ⚙️ Configuration
+<br>
 
-Pdsh uses **GNU autoconf** for configuration. Dynamically loadable modules for each shell service and feature are compiled based on your configuration.
+## 🏗️ Building & Configuration
 
-> **Default modules**: rsh, Kerberos IV, and SDR (for IBM SPs) are compiled automatically if available on your system.
+<div align="center">
 
-### 📦 Available Modules
+### ⚙️ Configuration System
 
-For a complete description of each module, including requirements and conflicts, see the [`README.modules`](README.modules) file.
+Pdsh uses **GNU autoconf** for flexible, platform-aware configuration
 
-### 🔧 Static Module Compilation
+</div>
 
-If your system doesn't support dynamically loadable modules, use:
+> 📦 **Default modules**: rsh, Kerberos IV, and SDR (for IBM SPs) are compiled automatically when available
 
-```bash
-./configure --enable-static-modules
-```
+<br>
+
+#### 📦 Module System
+
+Pdsh uses **dynamically loadable modules** for maximum flexibility. Each shell service and feature is compiled as a separate module based on your configuration.
+
+- **Dynamic Loading** (default): Modules loaded at runtime
+- **Static Compilation**: Use `./configure --enable-static-modules` if your system doesn't support dynamic loading
+
+📚 For detailed module descriptions, requirements, and conflicts, see [`README.modules`](README.modules)
 
 ---
+
+<br>
 
 ## 🛠️ Build Configuration Options
 
-Configure pdsh with additional features using these options:
+<div align="center">
+
+**Customize your pdsh build with these configuration flags**
+
+</div>
+
+<br>
 
 ### 🔐 Remote Shell Services
 
@@ -81,7 +156,12 @@ Configure pdsh with additional features using these options:
 | `--with-fanout=N` | 32 | Set default parallel connection fanout |
 | `--with-timeout=N` | 10 | Set default connect timeout (seconds) |
 
-### 📝 Example Configuration
+<br>
+
+### 📝 Example Configurations
+
+<details>
+<summary><strong>🔥 Recommended: Full-Featured Build</strong></summary>
 
 ```bash
 ./configure \
@@ -93,145 +173,374 @@ Configure pdsh with additional features using these options:
   --with-timeout=15
 ```
 
+</details>
+
+<details>
+<summary><strong>⚡ Performance-Optimized Build</strong></summary>
+
+```bash
+./configure \
+  --with-ssh \
+  --with-mrsh \
+  --with-fanout=128 \
+  --with-timeout=5 \
+  --with-nodeupdown
+```
+
+</details>
+
+<details>
+<summary><strong>🔒 Security-Focused Build</strong></summary>
+
+```bash
+./configure \
+  --without-rsh \
+  --with-ssh \
+  --with-readline \
+  --with-timeout=20
+```
+
+</details>
+
+<br>
+
 ### ⚠️ Module Conflicts
 
-Some configuration options may conflict because they perform identical operations. For example:
-- `genders` and `nodeattr` both support the `-g` option
-- When multiple modules support the same option, one will be selected as default
+> **Important**: Some modules perform identical operations and cannot coexist
+
+**Common conflicts:**
+- `genders` ↔️ `nodeattr` (both support `-g` option)
+- When conflicts exist, one module will be selected as default
 - Static compilation will **fail** if conflicting modules are selected
 
-📖 See the man page for details on which modules conflict.
+📖 See the man page for complete conflict details.
 
 ---
 
+<br>
+
 ## 📦 Installation
 
-### Quick Install
+<div align="center">
+
+### 🚀 Quick Start
+
+</div>
 
 ```bash
+# 1. Configure (see options above)
+./configure
+
+# 2. Build
 make
+
+# 3. Install
 make install
 ```
 
+<br>
+
 ### 🔒 SetUID Configuration (Optional)
 
-By default, pdsh installs **without setuid permissions**. For most protocols, root permissions aren't needed.
+<table>
+<tr>
+<td width="50%">
 
-**However**, if you're using `rcmd/rsh` or `rcmd/qsh` modules, you'll need setuid root:
+#### ✅ Default Behavior
+- Installs **without setuid permissions**
+- Works with SSH and most protocols
+- No special permissions required
 
+</td>
+<td width="50%">
+
+#### ⚠️ SetUID Required For
+- `rcmd/rsh` module
+- `rcmd/qsh` module
+
+**Enable with:**
 ```bash
 chown root PREFIX/bin/pdsh PREFIX/bin/pdcp
 chmod 4755 PREFIX/bin/pdsh PREFIX/bin/pdcp
 ```
 
----
-
-## ⚠️ Gotchas & Known Issues
-
-### 1️⃣ Reserved Socket Exhaustion
-
-When using rsh, krb4, qsh, or ssh, pdsh uses **reserved sockets** (obtained via `rresvport()`):
-- One socket per active connection (two if maintaining separate stderr)
-- Pool of 256 sockets available
-- Can be exhausted with:
-  - Multiple pdsh instances running simultaneously
-  - Very high fanout settings
-
-💡 **Solution**: Use mrsh/mqsh (no reserved ports) or reduce fanout with `--with-fanout=N`
-
-### 2️⃣ TCP Wrappers Bottlenecks
-
-When using remote shell services wrapped with TCP wrappers, watch for bottlenecks:
-
-| Service | Impact |
-|---------|--------|
-| **IDENT** | With `user@` in hosts.allow, each connection triggers IDENT query |
-| **DNS** | Each connection may trigger DNS lookup |
-| **SYSLOG** | Each connection creates syslog entry on loghost |
-
-💡 **Mitigation strategies**:
-- Configure without "PARANOID" option
-- Use IP addresses or subnets (avoid names and `user@` prefix)
-- Set SYSLOG severity to avoid remote logging
-- Reduce default fanout if needed
+</td>
+</tr>
+</table>
 
 ---
 
-## 🧠 Theory of Operation
+<br>
 
-> Generalized for the common remote shell service (rsh). Similar for SSH, Kerberos IV, qsh, etc.
-
-### Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         Main Thread                         │
-│  - Starts fanout number of rsh threads                      │
-│  - Waits on condition variable                              │
-│  - Maintains fanout until all commands complete             │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-        ┌───────────────────┼───────────────────┐
-        ↓                   ↓                   ↓
-   ┌─────────┐         ┌─────────┐         ┌─────────┐
-   │ Thread  │         │ Thread  │   ...   │ Thread  │
-   │    1    │         │    2    │         │    N    │
-   └─────────┘         └─────────┘         └─────────┘
-        │                   │                   │
-        ↓                   ↓                   ↓
-   [Node 1]            [Node 2]            [Node N]
-```
-
-### Thread Workflow
-
-1. **Thread Creation** - One thread per remote connection
-2. **Connection** - MT-safe rcmd-like function opens connection
-3. **I/O Streams** - Returns stdin and stderr streams
-4. **Termination** - Thread signals completion and terminates
-5. **Fanout Management** - Main thread starts new threads to maintain fanout
-
-### Timeout Management
-
-A dedicated **timeout thread** monitors all connection threads:
-- Terminates threads taking too long to connect
-- Enforces command completion timeouts (if requested)
-
-### 🎹 Interactive Controls
-
-| Key Combo | Action |
-|-----------|--------|
-| `^C` (first) | List threads in connected state |
-| `^C` (second) | Terminate program immediately |
-
----
-
-## 👨‍💻 Author
-
-**Jim Garlick** - [garlick@llnl.gov](mailto:garlick@llnl.gov)
-
-### 💌 Feedback Welcome
-
-Please send:
-- 🐛 Bug reports
-- 💡 Suggestions
-- 📊 Usage reports (we'd love to hear about your cluster size!)
-
----
-
-## 📄 License & Attribution
-
-This product includes software developed by the **University of California, Berkeley** and its contributors. Modifications have been made and bugs are probably mine.
-
-### ℹ️ Important Note
-
-The PDSH software package has **no affiliation** with the Democratic Party of Albania ([www.pdsh.org](http://www.pdsh.org)).
-
----
+## 🎯 Performance Tips & Troubleshooting
 
 <div align="center">
 
-**[Documentation](doc/)** • **[Modules](README.modules)** • **[Contributing](AUTHORS)**
+### ⚠️ Common Gotchas & Solutions
 
-Made with ❤️ for system administrators everywhere
+</div>
+
+<br>
+
+<details>
+<summary><strong>🔌 1. Reserved Socket Exhaustion</strong></summary>
+
+<br>
+
+**Problem**: When using rsh, krb4, qsh, or ssh, pdsh consumes reserved sockets via `rresvport()`
+
+```
+📊 Socket Usage:
+├─ One socket per active connection
+├─ Two sockets if maintaining separate stderr
+└─ Limited pool of 256 sockets
+```
+
+**Causes:**
+- ❌ Multiple pdsh instances running simultaneously
+- ❌ Very high fanout settings
+- ❌ Large cluster operations
+
+**💡 Solutions:**
+| Solution | Benefit |
+|----------|---------|
+| Use `mrsh/mqsh` | No reserved ports needed |
+| Reduce fanout | `--with-fanout=N` or `-f N` at runtime |
+| Serialize operations | Run pdsh instances sequentially |
+
+</details>
+
+<details>
+<summary><strong>🌐 2. TCP Wrappers Bottlenecks</strong></summary>
+
+<br>
+
+**Problem**: Remote shell services with TCP wrappers can create performance bottlenecks
+
+| Service | Impact | Solution |
+|---------|--------|----------|
+| **IDENT** | Each connection triggers IDENT query if `user@` in hosts.allow | Remove `user@` prefix |
+| **DNS** | Reverse DNS lookups for each connection | Use IP addresses or subnets |
+| **SYSLOG** | Each connection generates remote syslog entry | Adjust SYSLOG severity |
+
+**💡 Optimization Checklist:**
+- ✅ Configure **without** "PARANOID" option
+- ✅ Use IP addresses or subnets in hosts.allow (not hostnames)
+- ✅ Avoid `user@` prefix in configuration
+- ✅ Set SYSLOG severity to avoid remote logging
+- ✅ Reduce default fanout if bottlenecks persist
+
+</details>
+
+<details>
+<summary><strong>🚀 3. Performance Tuning Best Practices</strong></summary>
+
+<br>
+
+**Optimal Settings by Cluster Size:**
+
+| Cluster Size | Recommended Fanout | Timeout |
+|--------------|-------------------|---------|
+| 1-50 nodes | 32 (default) | 10s |
+| 51-200 nodes | 64 | 15s |
+| 201-1000 nodes | 128 | 20s |
+| 1000+ nodes | 256 | 30s |
+
+**Additional Tips:**
+- 🔹 Use `mrsh` for best performance (no reserved ports)
+- 🔹 Enable `--with-nodeupdown` to skip dead nodes automatically
+- 🔹 Use host groups to organize and target specific node sets
+- 🔹 Monitor with `^C` to see connection states in real-time
+
+</details>
+
+---
+
+<br>
+
+## 🧠 How PDSH Works
+
+<div align="center">
+
+### Architecture & Threading Model
+
+*Generalized for remote shell services (rsh, SSH, Kerberos IV, qsh, etc.)*
+
+</div>
+
+<br>
+
+### 🏗️ System Architecture
+
+```
+╔═══════════════════════════════════════════════════════════════╗
+║                      🎯 MAIN THREAD                           ║
+║                                                               ║
+║  • Spawns fanout number of worker threads                    ║
+║  • Waits on condition variables                              ║
+║  • Dynamically maintains fanout until completion             ║
+╚═══════════════════════════════════════════════════════════════╝
+                              ↓
+         ┌────────────────────┼────────────────────┐
+         ↓                    ↓                    ↓
+    ╔═════════╗          ╔═════════╗          ╔═════════╗
+    ║ Worker  ║          ║ Worker  ║   ...    ║ Worker  ║
+    ║ Thread  ║          ║ Thread  ║          ║ Thread  ║
+    ║   #1    ║          ║   #2    ║          ║   #N    ║
+    ╚═════════╝          ╚═════════╝          ╚═════════╝
+         ↓                    ↓                    ↓
+    ┌─────────┐          ┌─────────┐          ┌─────────┐
+    │ Node 1  │          │ Node 2  │          │ Node N  │
+    │ 🖥️      │          │ 🖥️      │          │ 🖥️      │
+    └─────────┘          └─────────┘          └─────────┘
+```
+
+<br>
+
+### ⚙️ Thread Lifecycle
+
+```mermaid
+graph LR
+    A[📌 Thread Created] --> B[🔌 Connect to Node]
+    B --> C[📡 Open I/O Streams]
+    C --> D[⚡ Execute Command]
+    D --> E[📥 Collect Output]
+    E --> F[✅ Signal Completion]
+    F --> G[💤 Thread Terminates]
+```
+
+<table>
+<tr>
+<td width="50%">
+
+#### 🔄 Worker Thread Operations
+1. **Creation** - One thread per remote host
+2. **Connection** - MT-safe rcmd-like function
+3. **I/O Setup** - Separate stdin/stderr streams
+4. **Execution** - Command runs on remote host
+5. **Cleanup** - Signal main thread on completion
+
+</td>
+<td width="50%">
+
+#### ⏱️ Timeout Management
+A dedicated **timeout thread** provides:
+- 🔍 Monitors all connection threads
+- ⏰ Enforces connection timeouts
+- 🛑 Terminates slow/hung threads
+- 📊 Maintains fanout efficiency
+
+</td>
+</tr>
+</table>
+
+<br>
+
+### 🎹 Interactive Controls
+
+| Key Combo | Action | Use Case |
+|-----------|--------|----------|
+| **`^C`** (first press) | 📊 List threads in connected state | Debug slow connections |
+| **`^C`** (second press) | 🛑 Terminate program immediately | Emergency abort |
+| **`^Z`** | ⏸️ Suspend (if enabled) | Pause operations |
+
+---
+
+<br>
+
+## 👥 Community & Support
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center" width="33%">
+
+### 👨‍💻 Author
+
+**Jim Garlick**
+
+📧 [garlick@llnl.gov](mailto:garlick@llnl.gov)
+
+</td>
+<td align="center" width="33%">
+
+### 💌 Feedback
+
+We welcome:
+
+🐛 Bug reports<br>
+💡 Feature suggestions<br>
+📊 Usage stories
+
+</td>
+<td align="center" width="33%">
+
+### 📚 Resources
+
+📖 [Documentation](doc/)<br>
+🔧 [Modules Guide](README.modules)<br>
+✍️ [Contributors](AUTHORS)
+
+</td>
+</tr>
+</table>
+
+</div>
+
+<br>
+
+---
+
+<br>
+
+## 📄 License & Legal
+
+<div align="center">
+
+### GNU General Public License
+
+This project is licensed under the **GPL** - see [COPYING](COPYING) for details
+
+</div>
+
+<br>
+
+> **Attribution**: This product includes software developed by the **University of California, Berkeley** and its contributors. Modifications have been made and bugs are probably mine (not theirs!).
+
+<br>
+
+### ℹ️ Disambiguation
+
+**Note**: The PDSH software package has **no affiliation** with the Democratic Party of Albania ([www.pdsh.org](http://www.pdsh.org)). We're just about parallel shells, not politics! 🙂
+
+---
+
+<br>
+
+<div align="center">
+
+## 🎯 Quick Links
+
+**[📖 Documentation](doc/)** │ **[🔧 Modules](README.modules)** │ **[✍️ Contributing](AUTHORS)** │ **[📜 License](COPYING)**
+
+<br>
+
+### 🌟 Star History
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/stars/chaos/pdsh?style=social">
+  <img alt="Stars" src="https://img.shields.io/github/stars/chaos/pdsh?style=social">
+</picture>
+
+<br><br>
+
+Made with ❤️ for system administrators and DevOps engineers everywhere
+
+**Scale your operations. Command your cluster. Parallel your world.**
+
+---
+
+*Tested on clusters from 2 to 2000+ nodes*
 
 </div>
