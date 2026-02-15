@@ -38,10 +38,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>           /* stat */
 #if	HAVE_UNISTD_H
-#include <unistd.h>             /* getopt */
+#include <unistd.h>             /* getopt, isatty */
 #endif
 
 #include <errno.h>
+#if HAVE_LANGINFO_H
+#include <langinfo.h>           /* nl_langinfo for locale detection */
+#endif
 
 #include <regex.h>
 #include <ctype.h>
@@ -64,51 +67,172 @@
  */
 #define DEFAULT_MAX_USERNAME_LENGTH 16
 
-#define OPT_USAGE_DSH "\
-Usage: pdsh [-options] command ...\n\
--S                return largest of remote command return values\n\
--k                fail fast on connect failure or non-zero return code\n"
+/*
+ *  ANSI color code constants for terminal formatting
+ */
+#define ANSI_RESET       "\033[0m"
+#define ANSI_BOLD        "\033[1m"
+#define ANSI_CYAN        "\033[1;36m"
+#define ANSI_MAGENTA     "\033[1;35m"
+#define ANSI_YELLOW      "\033[1;33m"
+#define ANSI_GREEN       "\033[1;32m"
+#define ANSI_BLUE        "\033[1;34m"
+
+/*
+ *  Fancy output feature control:
+ *   - Check if fancy output (colors, Unicode) should be enabled
+ *   - Respects NO_COLOR environment variable
+ *   - Requires UTF-8 locale for Unicode box-drawing characters and emojis
+ *   - Requires terminal output (not redirected)
+ */
+static int _should_use_fancy_output(void)
+{
+    /* Check NO_COLOR environment variable (https://no-color.org/) */
+    if (getenv("NO_COLOR") != NULL)
+        return 0;
+
+    /* Check PDSH_NO_COLOR environment variable */
+    if (getenv("PDSH_NO_COLOR") != NULL)
+        return 0;
+
+    /* Only output ANSI codes to actual terminals */
+    if (!isatty(STDOUT_FILENO))
+        return 0;
+
+#if HAVE_LANGINFO_H
+    /* Check for UTF-8 locale to support Unicode characters */
+    const char *codeset = nl_langinfo(CODESET);
+    if (codeset && strcmp(codeset, "UTF-8") != 0)
+        return 0;
+#endif
+
+    return 1;
+}
+
+/* Fancy output with colors and Unicode */
+#define OPT_USAGE_DSH_FANCY "\n" \
+ANSI_CYAN "╔════════════════════════════════════════════════════════════════╗" ANSI_RESET "\n" \
+ANSI_CYAN "║" ANSI_RESET "  " ANSI_YELLOW "🚀 PDSH - Parallel Distributed Shell" ANSI_RESET "                     " ANSI_CYAN "║" ANSI_RESET "\n" \
+ANSI_CYAN "╚════════════════════════════════════════════════════════════════╝" ANSI_RESET "\n\n" \
+ANSI_GREEN "Usage:" ANSI_RESET " " ANSI_BOLD "pdsh" ANSI_RESET " [" ANSI_YELLOW "-options" ANSI_RESET "] " ANSI_CYAN "command ..." ANSI_RESET "\n\n" \
+ANSI_MAGENTA "┌─ Command Execution Options ────────────────────────────────────┐" ANSI_RESET "\n" \
+"  " ANSI_YELLOW "-S" ANSI_RESET "                📊 Return largest of remote command return values\n" \
+"  " ANSI_YELLOW "-k" ANSI_RESET "                ⚡ Fail fast on connect failure or non-zero return code\n"
+
+/* Plain ASCII fallback for accessibility and non-UTF-8 locales */
+#define OPT_USAGE_DSH_PLAIN "\n\
+================================================================\n\
+  PDSH - Parallel Distributed Shell\n\
+================================================================\n\n\
+Usage: pdsh [-options] command ...\n\n\
+-- Command Execution Options ----------------------------------\n\
+  -S                Return largest of remote command return values\n\
+  -k                Fail fast on connect failure or non-zero return code\n"
 
 /* -s option only useful on AIX */
 #if	HAVE_MAGIC_RSHELL_CLEANUP
-#define OPT_USAGE_STDERR "\
--s                separate stderr and stdout\n"
+#define OPT_USAGE_STDERR_FANCY "\
+  " ANSI_YELLOW "-s" ANSI_RESET "                🔀 Separate stderr and stdout\n"
+#define OPT_USAGE_STDERR_PLAIN "\
+  -s                Separate stderr and stdout\n"
 #endif
 
 
-#define OPT_USAGE_PCP "\
-Usage: pdcp [-options] src [src2...] dest\n\
--r                recursively copy files\n\
--p                preserve modification time and modes\n\
--e PATH           specify the path to pdcp on the remote machine\n"
+#define OPT_USAGE_PCP_FANCY "\n" \
+ANSI_CYAN "╔════════════════════════════════════════════════════════════════╗" ANSI_RESET "\n" \
+ANSI_CYAN "║" ANSI_RESET "  " ANSI_YELLOW "📁 PDCP - Parallel Distributed Copy" ANSI_RESET "                      " ANSI_CYAN "║" ANSI_RESET "\n" \
+ANSI_CYAN "╚════════════════════════════════════════════════════════════════╝" ANSI_RESET "\n\n" \
+ANSI_GREEN "Usage:" ANSI_RESET " " ANSI_BOLD "pdcp" ANSI_RESET " [" ANSI_YELLOW "-options" ANSI_RESET "] " ANSI_CYAN "src [src2...] dest" ANSI_RESET "\n\n" \
+ANSI_MAGENTA "┌─ Copy Options ──────────────────────────────────────────────────┐" ANSI_RESET "\n" \
+"  " ANSI_YELLOW "-r" ANSI_RESET "                🔄 Recursively copy files\n" \
+"  " ANSI_YELLOW "-p" ANSI_RESET "                🔒 Preserve modification time and modes\n" \
+"  " ANSI_YELLOW "-e" ANSI_RESET " PATH           🛤️  Specify the path to pdcp on the remote machine\n"
+
+#define OPT_USAGE_PCP_PLAIN "\n\
+================================================================\n\
+  PDCP - Parallel Distributed Copy\n\
+================================================================\n\n\
+Usage: pdcp [-options] src [src2...] dest\n\n\
+-- Copy Options ------------------------------------------------\n\
+  -r                Recursively copy files\n\
+  -p                Preserve modification time and modes\n\
+  -e PATH           Specify the path to pdcp on the remote machine\n"
 /* undocumented "-y"  target must be directory option */
 /* undocumented "-z"  run pdcp server option */
 /* undocumented "-Z"  run pdcp client option */
 
-#define OPT_USAGE_RPCP "\
-Usage: rpdcp [-options] src [src2...] dir\n\
--r                recursively copy files\n\
--p                preserve modification time and modes\n"
+#define OPT_USAGE_RPCP_FANCY "\n" \
+ANSI_CYAN "╔════════════════════════════════════════════════════════════════╗" ANSI_RESET "\n" \
+ANSI_CYAN "║" ANSI_RESET "  " ANSI_YELLOW "📥 RPDCP - Reverse Parallel Distributed Copy" ANSI_RESET "            " ANSI_CYAN "║" ANSI_RESET "\n" \
+ANSI_CYAN "╚════════════════════════════════════════════════════════════════╝" ANSI_RESET "\n\n" \
+ANSI_GREEN "Usage:" ANSI_RESET " " ANSI_BOLD "rpdcp" ANSI_RESET " [" ANSI_YELLOW "-options" ANSI_RESET "] " ANSI_CYAN "src [src2...] dir" ANSI_RESET "\n\n" \
+ANSI_MAGENTA "┌─ Copy Options ──────────────────────────────────────────────────┐" ANSI_RESET "\n" \
+"  " ANSI_YELLOW "-r" ANSI_RESET "                🔄 Recursively copy files\n" \
+"  " ANSI_YELLOW "-p" ANSI_RESET "                🔒 Preserve modification time and modes\n"
+
+#define OPT_USAGE_RPCP_PLAIN "\n\
+================================================================\n\
+  RPDCP - Reverse Parallel Distributed Copy\n\
+================================================================\n\n\
+Usage: rpdcp [-options] src [src2...] dir\n\n\
+-- Copy Options ------------------------------------------------\n\
+  -r                Recursively copy files\n\
+  -p                Preserve modification time and modes\n"
 /* undocumented "-y"  target must be directory option */
 /* undocumented "-z"  run pdcp server option */
 /* undocumented "-Z"  run pdcp client option */
 
-#define OPT_USAGE_COMMON "\
--h                output usage menu and quit\n\
--V                output version information and quit\n\
--q                list the option settings and quit\n\
--b                disable ^C status feature (batch mode)\n\
--d                enable extra debug information from ^C status\n\
--l user           execute remote commands as user\n\
--t seconds        set connect timeout (default is 10 sec)\n\
--u seconds        set command timeout (no default)\n\
--f n              use fanout of n nodes\n\
--w host,host,...  set target node list on command line\n\
--x host,host,...  set node exclusion list on command line\n\
--R name           set rcmd module to name\n\
--M name,...       select one or more misc modules to initialize first\n\
--N                disable hostname: labels on output lines\n\
--L                list info on all loaded modules and exit\n"
+#define OPT_USAGE_COMMON_FANCY \
+ANSI_MAGENTA "└─────────────────────────────────────────────────────────────────┘" ANSI_RESET "\n\n" \
+ANSI_MAGENTA "┌─ General Options ───────────────────────────────────────────────┐" ANSI_RESET "\n" \
+"  " ANSI_YELLOW "-h" ANSI_RESET "                ❓ Output usage menu and quit\n" \
+"  " ANSI_YELLOW "-V" ANSI_RESET "                ℹ️  Output version information and quit\n" \
+"  " ANSI_YELLOW "-q" ANSI_RESET "                📋 List the option settings and quit\n" \
+"  " ANSI_YELLOW "-b" ANSI_RESET "                🚫 Disable ^C status feature (batch mode)\n" \
+"  " ANSI_YELLOW "-d" ANSI_RESET "                🐛 Enable extra debug information from ^C status\n" \
+ANSI_MAGENTA "└─────────────────────────────────────────────────────────────────┘" ANSI_RESET "\n\n" \
+ANSI_MAGENTA "┌─ Authentication & Connection ───────────────────────────────────┐" ANSI_RESET "\n" \
+"  " ANSI_YELLOW "-l" ANSI_RESET " user           👤 Execute remote commands as user\n" \
+"  " ANSI_YELLOW "-t" ANSI_RESET " seconds        ⏱️  Set connect timeout (default is 10 sec)\n" \
+"  " ANSI_YELLOW "-u" ANSI_RESET " seconds        ⏰ Set command timeout (no default)\n" \
+ANSI_MAGENTA "└─────────────────────────────────────────────────────────────────┘" ANSI_RESET "\n\n" \
+ANSI_MAGENTA "┌─ Target Selection & Performance ────────────────────────────────┐" ANSI_RESET "\n" \
+"  " ANSI_YELLOW "-f" ANSI_RESET " n              🔥 Use fanout of n nodes\n" \
+"  " ANSI_YELLOW "-w" ANSI_RESET " host,host,...  🎯 Set target node list on command line\n" \
+"  " ANSI_YELLOW "-x" ANSI_RESET " host,host,...  ❌ Set node exclusion list on command line\n" \
+ANSI_MAGENTA "└─────────────────────────────────────────────────────────────────┘" ANSI_RESET "\n\n" \
+ANSI_MAGENTA "┌─ Module & Output Options ───────────────────────────────────────┐" ANSI_RESET "\n" \
+"  " ANSI_YELLOW "-R" ANSI_RESET " name           🔌 Set rcmd module to name\n" \
+"  " ANSI_YELLOW "-M" ANSI_RESET " name,...       🧩 Select one or more misc modules to initialize first\n" \
+"  " ANSI_YELLOW "-N" ANSI_RESET "                🏷️  Disable hostname: labels on output lines\n" \
+"  " ANSI_YELLOW "-L" ANSI_RESET "                📚 List info on all loaded modules and exit\n" \
+ANSI_MAGENTA "└─────────────────────────────────────────────────────────────────┘" ANSI_RESET "\n"
+
+#define OPT_USAGE_COMMON_PLAIN "\
+---------------------------------------------------------------\n\n\
+-- General Options ---------------------------------------------\n\
+  -h                Output usage menu and quit\n\
+  -V                Output version information and quit\n\
+  -q                List the option settings and quit\n\
+  -b                Disable ^C status feature (batch mode)\n\
+  -d                Enable extra debug information from ^C status\n\
+---------------------------------------------------------------\n\n\
+-- Authentication & Connection ---------------------------------\n\
+  -l user           Execute remote commands as user\n\
+  -t seconds        Set connect timeout (default is 10 sec)\n\
+  -u seconds        Set command timeout (no default)\n\
+---------------------------------------------------------------\n\n\
+-- Target Selection & Performance ------------------------------\n\
+  -f n              Use fanout of n nodes\n\
+  -w host,host,...  Set target node list on command line\n\
+  -x host,host,...  Set node exclusion list on command line\n\
+---------------------------------------------------------------\n\n\
+-- Module & Output Options -------------------------------------\n\
+  -R name           Set rcmd module to name\n\
+  -M name,...       Select one or more misc modules to initialize first\n\
+  -N                Disable hostname: labels on output lines\n\
+  -L                List info on all loaded modules and exit\n\
+---------------------------------------------------------------\n"
 /* undocumented "-T testcase" option */
 /* undocumented "-Q" option */
 /* undocumented "-K" option -  keep domain name in output */
@@ -1143,8 +1267,11 @@ static char *_rcmd_module_list(char *buf, int maxlen)
     }
 
 done:
-    if ((len < 0) || (len > maxlen))
-        snprintf(buf + maxlen - 12, 12, "[truncated]");
+    if ((len < 0) || (len > maxlen)) {
+        /* Ensure buffer is large enough for truncation message */
+        if (maxlen >= 12)
+            snprintf(buf + maxlen - 12, 12, "[truncated]");
+    }
 
     buf[maxlen - 1] = '\0';
     return buf;
@@ -1156,23 +1283,36 @@ done:
  */
 static void _usage(opt_t * opt)
 {
-    char buf[1024];
+    char buf[2048];  /* Increased buffer size to accommodate longer strings */
+    int fancy = _should_use_fancy_output();
 
     if (personality == DSH) {
-        err(OPT_USAGE_DSH);
+        err(fancy ? OPT_USAGE_DSH_FANCY : OPT_USAGE_DSH_PLAIN);
 #if	HAVE_MAGIC_RSHELL_CLEANUP
-        err(OPT_USAGE_STDERR);
+        err(fancy ? OPT_USAGE_STDERR_FANCY : OPT_USAGE_STDERR_PLAIN);
 #endif
     } else if (!opt->reverse_copy) /* PCP */
-        err(OPT_USAGE_PCP);
+        err(fancy ? OPT_USAGE_PCP_FANCY : OPT_USAGE_PCP_PLAIN);
     else
-        err(OPT_USAGE_RPCP);
+        err(fancy ? OPT_USAGE_RPCP_FANCY : OPT_USAGE_RPCP_PLAIN);
 
-    err(OPT_USAGE_COMMON);
+    err(fancy ? OPT_USAGE_COMMON_FANCY : OPT_USAGE_COMMON_PLAIN);
 
     mod_print_all_options(18);
 
-    err("available rcmd modules: %s\n", _rcmd_module_list(buf, 1024));
+    if (fancy) {
+        err("\n" ANSI_MAGENTA "┌─ Available Modules ─────────────────────────────────────────────┐" ANSI_RESET "\n");
+        err("  " ANSI_CYAN "🔌 rcmd modules:" ANSI_RESET " %s\n", _rcmd_module_list(buf, sizeof(buf)));
+        err(ANSI_MAGENTA "└─────────────────────────────────────────────────────────────────┘" ANSI_RESET "\n");
+        err("\n" ANSI_BLUE "💡 Tip:" ANSI_RESET " Use " ANSI_YELLOW "-L" ANSI_RESET " to see detailed module information\n");
+        err(ANSI_BLUE "📖 Docs:" ANSI_RESET " See man pages for more: " ANSI_CYAN "man pdsh" ANSI_RESET "\n\n");
+    } else {
+        err("\n-- Available Modules -------------------------------------------\n");
+        err("  rcmd modules: %s\n", _rcmd_module_list(buf, sizeof(buf)));
+        err("---------------------------------------------------------------\n");
+        err("\nTip: Use -L to see detailed module information\n");
+        err("Docs: See man pages for more: man pdsh\n\n");
+    }
 
     exit(1);
 }
@@ -1180,23 +1320,52 @@ static void _usage(opt_t * opt)
 
 static void _show_version(void)
 {
-    char buf[1024];
+    char buf[2048];  /* Increased buffer size to accommodate longer strings */
     extern char *pdsh_version;
     int n;
+    int fancy = _should_use_fancy_output();
 
-    printf("%s\n", pdsh_version);
-    printf("rcmd modules: %s\n", _rcmd_module_list(buf, sizeof (buf)));
+    if (fancy) {
+        printf(ANSI_CYAN "╔════════════════════════════════════════════════════════════════╗" ANSI_RESET "\n");
+        printf(ANSI_CYAN "║" ANSI_RESET "  " ANSI_YELLOW "🚀 PDSH - Parallel Distributed Shell" ANSI_RESET "                     " ANSI_CYAN "║" ANSI_RESET "\n");
+        printf(ANSI_CYAN "╚════════════════════════════════════════════════════════════════╝" ANSI_RESET "\n\n");
+        printf(ANSI_GREEN "📦 Version:" ANSI_RESET " %s\n\n", pdsh_version);
 
-    n = _module_list_string("misc", buf, sizeof (buf));
-    printf("misc modules: %s", n ? buf : "(none)");
+        printf(ANSI_MAGENTA "┌─ Loaded Modules ────────────────────────────────────────────────┐" ANSI_RESET "\n");
+        printf("  " ANSI_CYAN "🔌 rcmd modules:" ANSI_RESET " %s\n", _rcmd_module_list(buf, sizeof (buf)));
 
-    if ((n = _module_list_uninitialized ("misc", buf, sizeof (buf)))) {
-        printf (" (*conflicting: %s)\n", buf);
-	printf ("[* To force-load a conflicting module,"
-	        " use the -M <name> option]\n");
+        n = _module_list_string("misc", buf, sizeof (buf));
+        printf("  " ANSI_CYAN "🧩 misc modules:" ANSI_RESET " %s", n ? buf : "(none)");
+
+        if ((n = _module_list_uninitialized ("misc", buf, sizeof (buf)))) {
+            printf ("\n  " ANSI_YELLOW "⚠️  conflicting:" ANSI_RESET " %s\n", buf);
+            printf(ANSI_MAGENTA "└─────────────────────────────────────────────────────────────────┘" ANSI_RESET "\n");
+            printf("\n" ANSI_BLUE "💡 Tip:" ANSI_RESET " To force-load a conflicting module, use " ANSI_YELLOW "-M <name>" ANSI_RESET "\n\n");
+        }
+        else {
+            printf ("\n" ANSI_MAGENTA "└─────────────────────────────────────────────────────────────────┘" ANSI_RESET "\n\n");
+        }
+    } else {
+        printf("================================================================\n");
+        printf("  PDSH - Parallel Distributed Shell\n");
+        printf("================================================================\n\n");
+        printf("Version: %s\n\n", pdsh_version);
+
+        printf("-- Loaded Modules ----------------------------------------------\n");
+        printf("  rcmd modules: %s\n", _rcmd_module_list(buf, sizeof (buf)));
+
+        n = _module_list_string("misc", buf, sizeof (buf));
+        printf("  misc modules: %s", n ? buf : "(none)");
+
+        if ((n = _module_list_uninitialized ("misc", buf, sizeof (buf)))) {
+            printf ("\n  conflicting: %s\n", buf);
+            printf("---------------------------------------------------------------\n");
+            printf("\nTip: To force-load a conflicting module, use -M <name>\n\n");
+        }
+        else {
+            printf ("\n---------------------------------------------------------------\n\n");
+        }
     }
-    else
-        printf ("\n");
 
     exit(0);
 }
