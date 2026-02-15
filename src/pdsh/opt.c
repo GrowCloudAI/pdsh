@@ -65,50 +65,87 @@
 #define DEFAULT_MAX_USERNAME_LENGTH 16
 
 #define OPT_USAGE_DSH "\
-Usage: pdsh [-options] command ...\n\
--S                return largest of remote command return values\n\
--k                fail fast on connect failure or non-zero return code\n"
+\n\
+╔═══════════════════════════════════════════════════════════════════════════╗\n\
+║  🚀 PDSH - Parallel Distributed Shell                                     ║\n\
+║  Execute commands on multiple hosts in parallel                          ║\n\
+╚═══════════════════════════════════════════════════════════════════════════╝\n\
+\n\
+📋 USAGE:\n\
+   pdsh [-options] command ...\n\
+\n\
+🎯 COMMAND EXECUTION:\n\
+   -S                Return largest of remote command return values\n\
+   -k                Fail fast on connect failure or non-zero return code\n"
 
 /* -s option only useful on AIX */
 #if	HAVE_MAGIC_RSHELL_CLEANUP
 #define OPT_USAGE_STDERR "\
--s                separate stderr and stdout\n"
+   -s                Separate stderr and stdout\n"
 #endif
 
 
 #define OPT_USAGE_PCP "\
-Usage: pdcp [-options] src [src2...] dest\n\
--r                recursively copy files\n\
--p                preserve modification time and modes\n\
--e PATH           specify the path to pdcp on the remote machine\n"
+\n\
+╔═══════════════════════════════════════════════════════════════════════════╗\n\
+║  📦 PDCP - Parallel Distributed Copy                                      ║\n\
+║  Copy files to multiple hosts in parallel                                ║\n\
+╚═══════════════════════════════════════════════════════════════════════════╝\n\
+\n\
+📋 USAGE:\n\
+   pdcp [-options] src [src2...] dest\n\
+\n\
+📁 FILE OPERATIONS:\n\
+   -r                Recursively copy files\n\
+   -p                Preserve modification time and modes\n\
+   -e PATH           Specify the path to pdcp on the remote machine\n"
 /* undocumented "-y"  target must be directory option */
 /* undocumented "-z"  run pdcp server option */
 /* undocumented "-Z"  run pdcp client option */
 
 #define OPT_USAGE_RPCP "\
-Usage: rpdcp [-options] src [src2...] dir\n\
--r                recursively copy files\n\
--p                preserve modification time and modes\n"
+\n\
+╔═══════════════════════════════════════════════════════════════════════════╗\n\
+║  📥 RPDCP - Reverse Parallel Distributed Copy                             ║\n\
+║  Copy files from multiple hosts in parallel                              ║\n\
+╚═══════════════════════════════════════════════════════════════════════════╝\n\
+\n\
+📋 USAGE:\n\
+   rpdcp [-options] src [src2...] dir\n\
+\n\
+📁 FILE OPERATIONS:\n\
+   -r                Recursively copy files\n\
+   -p                Preserve modification time and modes\n"
 /* undocumented "-y"  target must be directory option */
 /* undocumented "-z"  run pdcp server option */
 /* undocumented "-Z"  run pdcp client option */
 
 #define OPT_USAGE_COMMON "\
--h                output usage menu and quit\n\
--V                output version information and quit\n\
--q                list the option settings and quit\n\
--b                disable ^C status feature (batch mode)\n\
--d                enable extra debug information from ^C status\n\
--l user           execute remote commands as user\n\
--t seconds        set connect timeout (default is 10 sec)\n\
--u seconds        set command timeout (no default)\n\
--f n              use fanout of n nodes\n\
--w host,host,...  set target node list on command line\n\
--x host,host,...  set node exclusion list on command line\n\
--R name           set rcmd module to name\n\
--M name,...       select one or more misc modules to initialize first\n\
--N                disable hostname: labels on output lines\n\
--L                list info on all loaded modules and exit\n"
+\n\
+ℹ️  INFORMATION:\n\
+   -h                Output usage menu and quit\n\
+   -V                Output version information and quit\n\
+   -q                List the option settings and quit\n\
+   -L                List info on all loaded modules and exit\n\
+\n\
+🔧 GENERAL OPTIONS:\n\
+   -l user           Execute remote commands as user\n\
+   -b                Disable ^C status feature (batch mode)\n\
+   -d                Enable extra debug information from ^C status\n\
+   -N                Disable hostname: labels on output lines\n\
+\n\
+⏱️  TIMEOUTS:\n\
+   -t seconds        Set connect timeout (default is 10 sec)\n\
+   -u seconds        Set command timeout (no default)\n\
+\n\
+🌐 HOST SELECTION:\n\
+   -w host,host,...  Set target node list on command line\n\
+   -x host,host,...  Set node exclusion list on command line\n\
+   -f n              Use fanout of n nodes\n\
+\n\
+🔌 MODULES:\n\
+   -R name           Set rcmd module to name\n\
+   -M name,...       Select one or more misc modules to initialize first\n"
 /* undocumented "-T testcase" option */
 /* undocumented "-Q" option */
 /* undocumented "-K" option -  keep domain name in output */
@@ -1172,7 +1209,40 @@ static void _usage(opt_t * opt)
 
     mod_print_all_options(18);
 
-    err("available rcmd modules: %s\n", _rcmd_module_list(buf, 1024));
+    err("\n🔧 AVAILABLE MODULES:\n");
+    err("   rcmd modules: %s\n", _rcmd_module_list(buf, 1024));
+
+    if (personality == DSH) {
+        err("\n💡 EXAMPLES:\n");
+        err("   # Execute command on multiple hosts:\n");
+        err("   pdsh -w host[1-10] uptime\n");
+        err("\n");
+        err("   # Use SSH with specific user:\n");
+        err("   pdsh -R ssh -l root -w node[01-20] 'df -h'\n");
+        err("\n");
+        err("   # Exclude specific hosts:\n");
+        err("   pdsh -w host[1-100] -x host[5,10,15] hostname\n");
+        err("\n");
+    } else {
+        err("\n💡 EXAMPLES:\n");
+        if (!opt->reverse_copy) {
+            err("   # Copy file to multiple hosts:\n");
+            err("   pdcp -w host[1-10] /etc/hosts /tmp/\n");
+            err("\n");
+            err("   # Recursively copy directory:\n");
+            err("   pdcp -r -w node[01-20] /local/dir /remote/path/\n");
+            err("\n");
+        } else {
+            err("   # Copy files from multiple hosts:\n");
+            err("   rpdcp -w host[1-10] /remote/file.txt /local/dir/\n");
+            err("\n");
+        }
+    }
+
+    err("╔═══════════════════════════════════════════════════════════════════════════╗\n");
+    err("║  📚 For more information, see the man pages: man pdsh, man pdcp          ║\n");
+    err("╚═══════════════════════════════════════════════════════════════════════════╝\n");
+    err("\n");
 
     exit(1);
 }
