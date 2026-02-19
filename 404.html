@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | PDSH</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 800px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .error-box {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 3rem 2rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .donkey {
+            font-size: 120px;
+            margin-bottom: 1rem;
+            animation: wiggle 2s ease-in-out infinite;
+            display: inline-block;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            outline: none;
+        }
+
+        .donkey:focus {
+            outline: 2px solid #667eea;
+            outline-offset: 5px;
+            border-radius: 10px;
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        h1 {
+            font-size: 6rem;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1);
+            font-weight: 800;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: #764ba2;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .message {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+
+        .joke {
+            font-style: italic;
+            color: #888;
+            margin: 1.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .buttons {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea !important;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .btn-secondary:focus {
+            outline: 2px solid #764ba2;
+            outline-offset: 2px;
+        }
+
+        .clouds {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 100px;
+            animation: drift linear infinite;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 100px;
+        }
+
+        .cloud1 {
+            width: 100px;
+            height: 40px;
+            top: 20%;
+            left: -100px;
+            animation-duration: 25s;
+        }
+
+        .cloud1::before {
+            width: 50px;
+            height: 50px;
+            top: -25px;
+            left: 10px;
+        }
+
+        .cloud1::after {
+            width: 60px;
+            height: 40px;
+            top: -15px;
+            right: 10px;
+        }
+
+        .cloud2 {
+            width: 120px;
+            height: 50px;
+            top: 50%;
+            left: -120px;
+            animation-duration: 30s;
+            animation-delay: 5s;
+        }
+
+        .cloud2::before {
+            width: 60px;
+            height: 60px;
+            top: -30px;
+            left: 15px;
+        }
+
+        .cloud2::after {
+            width: 70px;
+            height: 50px;
+            top: -20px;
+            right: 15px;
+        }
+
+        .cloud3 {
+            width: 90px;
+            height: 35px;
+            top: 70%;
+            left: -90px;
+            animation-duration: 20s;
+            animation-delay: 10s;
+        }
+
+        .cloud3::before {
+            width: 45px;
+            height: 45px;
+            top: -20px;
+            left: 8px;
+        }
+
+        .cloud3::after {
+            width: 55px;
+            height: 35px;
+            top: -12px;
+            right: 8px;
+        }
+
+        @keyframes drift {
+            from { left: -200px; }
+            to { left: 110%; }
+        }
+
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 4rem; }
+            h2 { font-size: 1.5rem; }
+            .message { font-size: 1rem; }
+            .donkey { font-size: 80px; }
+            .error-box { padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="clouds">
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+        <div class="cloud cloud3"></div>
+    </div>
+
+    <div class="container">
+        <div class="error-box">
+            <button class="donkey" aria-label="Click for a surprise message">🫏</button>
+            <h1>404</h1>
+            <h2>Well, This is Awkward...</h2>
+            <p class="message">
+                <strong>Hee-haw!</strong> Looks like you've wandered into the wrong pasture!
+            </p>
+            <p class="message">
+                The page you're looking for seems to have trotted off somewhere else.
+            </p>
+            <p class="joke">
+                "Why did the donkey cross the road? To find the 404 page you're looking for!"
+                <br>...Okay, maybe that wasn't funny. 🤷
+            </p>
+
+            <div class="buttons">
+                <a href="/" class="btn btn-primary">🏠 Take Me Home</a>
+                <button onclick="history.back()" class="btn btn-secondary">⬅️ Go Back</button>
+            </div>
+
+            <div class="footer">
+                <p>Lost in the parallel distributed shell? Check out the <a href="https://github.com/chaos/pdsh">PDSH GitHub</a> 🚀</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add a little extra fun - shake on page load
+        window.addEventListener('load', function() {
+            const errorBox = document.querySelector('.error-box');
+            if (errorBox) {
+                errorBox.style.animation = 'float 3s ease-in-out infinite, shake 0.5s';
+            }
+        });
+
+        // Easter egg - click the donkey for a surprise
+        const donkeyButton = document.querySelector('.donkey');
+        if (donkeyButton) {
+            donkeyButton.addEventListener('click', function() {
+            const messages = [
+                "Hee-haw! 🎉",
+                "Stop clicking me! 😅",
+                "I'm just a donkey, not a button! 🫏",
+                "That tickles! 😄",
+                "The page is still missing! 🤷",
+                "Have you tried turning it off and on again? 🔌"
+            ];
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+            // Create a temporary message
+            const tempMsg = document.createElement('div');
+            tempMsg.textContent = randomMessage;
+            tempMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(102,126,234,0.9);color:white;padding:1rem 2rem;border-radius:15px;font-size:1.5rem;z-index:9999;animation:fadeInOut 2s forwards;';
+            document.body.appendChild(tempMsg);
+
+            // Add animation
+            const style = document.createElement('style');
+            style.textContent = '@keyframes fadeInOut { 0% { opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }';
+            document.head.appendChild(style);
+
+            setTimeout(() => {
+                if (document.body.contains(tempMsg)) {
+                    document.body.removeChild(tempMsg);
+                }
+                if (document.head.contains(style)) {
+                    document.head.removeChild(style);
+                }
+            }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
